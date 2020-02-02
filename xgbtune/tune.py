@@ -1,3 +1,4 @@
+import itertools
 import xgboost as xgb
 
 def tune_xgb_param(model, train_set, val_set, parameters, tune_list, tune_params, round_count):
