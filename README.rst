@@ -13,5 +13,5 @@ Get Started
 
     params, round_count = tune_xgb_model(
         x_train, y_train,
-        x_test, y_test,
+        x_val, y_val,
         params)
