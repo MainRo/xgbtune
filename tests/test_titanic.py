@@ -9,6 +9,7 @@ def test_titanic():
     dataset_path = str(pathlib.Path(__file__).parent.absolute())
 
     df = pd.read_csv(os.path.join(dataset_path, 'datasets', 'titanic.csv'))
+    df['Sex'] = df['Sex'].map(lambda i: 1 if 'male' else 0)
     x = df[['Sex', 'Age', 'SibSp', 'Parch', 'Fare']]
     y = df['Survived']
 
