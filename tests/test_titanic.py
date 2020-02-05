@@ -6,7 +6,7 @@ from xgbtune import tune_xgb_model
 
 
 def test_titanic():
-    dataset_path = pathlib.Path(__file__).parent.absolute()
+    dataset_path = str(pathlib.Path(__file__).parent.absolute())
 
     df = pd.read_csv(os.path.join(dataset_path, 'datasets', 'titanic.csv'))
     x = df[['Sex', 'Age', 'SibSp', 'Parch', 'Fare']]
