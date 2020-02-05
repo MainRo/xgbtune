@@ -1,0 +1,2 @@
+xgboost>=0.90
+pandas>=1.0
