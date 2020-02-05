@@ -26,5 +26,15 @@ def test_titanic():
         params
     )
 
-    assert {} == actual_params
-    assert 3 == actual_round_count
+    assert {
+        'objective': 'binary:logistic',
+        'eval_metric': 'error',
+        'max_depth': 8,
+        'min_child_weight': 1,
+        'gamma': 0.4,
+        'subsample': 0.6,
+        'colsample_bytree': 0.8,
+        'alpha': 0.1,
+        'lambda': 1.5,
+        'seed': 54} == actual_params
+    assert 11 == actual_round_count
