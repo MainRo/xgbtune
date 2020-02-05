@@ -16,9 +16,14 @@ def test_titanic():
         x, y, test_size=0.2, random_state=42)
 
     params = {
-
+        'objective': 'binary:logistic',
+        'eval_metric': 'error',
     }
 
-    actual_params, actual_round_count = tune_xgb_model(x_train, y_train, x_test, y_test)
+    actual_params, actual_round_count = tune_xgb_model(
+        x_train, y_train, x_test, y_test,
+        params
+    )
+
     assert {} == actual_params
     assert 3 == actual_round_count
