@@ -1,10 +1,14 @@
+import os
+import pathlib
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from xgbtune import tune_xgb_model
 
 
 def test_titanic():
-    df = pd.read_csv('./datasets/titanic.csv')
+    dataset_path = pathlib.Path(__file__).parent.absolute()
+
+    df = pd.read_csv(os.path.join(dataset_path, 'datasets', 'titanic.csv'))
     x = df[['Sex', 'Age', 'SibSp', 'Parch', 'Fare']]
     y = df['Survived']
 
