@@ -1,5 +1,5 @@
 import pandas as pd
-from learn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split
 from xgbtune import tune_xgb_model
 
 
