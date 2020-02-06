@@ -82,7 +82,7 @@ def tune_xgb_pass(train, target, val, val_target, base_params, round_count, loss
 
     print("tuning subsample and colsample_bytree ...")
     subsample_range = [i/10.0 for i in range(6,10)]
-    colsample_bytree_range = [i/10.0 for i in range(6,10)]
+    colsample_bytree_range = [i/10.0 for i in range(0,10)]
     tune_list = itertools.product(subsample_range, colsample_bytree_range)
     base_params = tune_xgb_param(
         model, d_train, d_val, base_params,
