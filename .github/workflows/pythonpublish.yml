@@ -1,6 +1,6 @@
 name: Publish Python package
 
-on: [tag]
+on: [push]
 
 jobs:
   publish:
