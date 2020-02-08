@@ -40,8 +40,8 @@ setup(
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
-        'Programming Language :: Python :: 3'
-        'Topic :: Scientific/Engineering :: Artificial Intelligence'
+        'Programming Language :: Python :: 3',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
     project_urls={
         'Documentation': 'https://xgbtune.readthedocs.io',
