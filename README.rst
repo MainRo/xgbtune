@@ -6,6 +6,10 @@ XGBTune
 .. image:: https://badge.fury.io/py/xgbtune.svg
     :target: https://badge.fury.io/py/xgbtune
 
+.. image:: https://github.com/mainro/xgbtune/workflows/Python%20package/badge.svg
+    :target: https://github.com/mainro/xgbtune/actions?query=workflow%3A%22Python+package%22
+    :alt: Github WorkFlows
+
 .. image:: https://readthedocs.org/projects/xgbtune/badge/?version=latest
     :target: https://xgbtune.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
