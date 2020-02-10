@@ -1,25 +1,47 @@
 import operator
+import functools
 import itertools
+import numpy as np
 import xgboost as xgb
 
 
-def tune_xgb_param(model, train_set, val_set, parameters, tune_list, tune_params, round_count, loss_compare):
+def _fit_val(xgb_fit, parameters, train_set, round_count):
+    evals_result = {}
+    model = xgb_fit(
+        parameters, train_set,
+        num_boost_round=round_count,
+        early_stopping_rounds=10,
+        evals_result=evals_result,
+        verbose_eval=False,
+    )
+
+    loss = evals_result['validation'][parameters['eval_metric']][-1]
+    best_round = model.best_iteration + 1
+    return best_round, loss
+
+
+def _fit_cv(xgb_fit, parameters, train_set, round_count):
+    eval = xgb_fit(
+        parameters, train_set,
+        num_boost_round=round_count,
+        early_stopping_rounds=10,
+        verbose_eval=False,
+    )
+
+    best_round = eval.shape[0]
+    loss = np.round(eval.iloc[-1, 0], 4)
+    return best_round, loss
+
+
+def tune_xgb_param(fit, train_set, parameters, tune_list, tune_params, round_count, loss_compare):
     best_loss = None
     best_config = None
     for tune_config in tune_list:
         for index, param in enumerate(tune_params):
             parameters[param] = tune_config[index]
         evals_result = {}
-        xgb.train(
-            parameters, train_set,
-            num_boost_round=round_count,
-            early_stopping_rounds=10,
-            evals=[(val_set, "validation")],
-            evals_result=evals_result,
-            verbose_eval=False,
-        )
+        _, loss = fit(parameters, train_set, round_count)
 
-        loss = evals_result['validation'][parameters['eval_metric']][-1]
         if best_loss is None or loss_compare(loss, best_loss):
             best_loss = loss
             best_config = tune_config
@@ -32,22 +54,10 @@ def tune_xgb_param(model, train_set, val_set, parameters, tune_list, tune_params
     return parameters
 
 
-def tune_xgb_pass(train, target, val, val_target, base_params, round_count, loss_compare):
-    d_train = xgb.DMatrix(train, label=target)
-    d_val = xgb.DMatrix(val, label=val_target)
-
+def tune_xgb_pass(fit, d_train, base_params, round_count, loss_compare):
     print("computing best round...")
     evals_result = {}
-    model = xgb.train(
-        base_params, d_train, 
-        num_boost_round=round_count,
-        early_stopping_rounds=10,
-        evals=[(d_val, "validation")],
-        evals_result=evals_result,
-        verbose_eval=False,
-    )
-
-    round_count = model.best_iteration + 1
+    round_count, _ = fit(base_params, d_train, round_count)
     print("best round: {}".format(round_count))
 
     print("tuning max_depth and min_child_weight ...")
@@ -55,37 +65,29 @@ def tune_xgb_pass(train, target, val, val_target, base_params, round_count, loss
     min_child_weight_range = list(range(1,4))
     tune_list = itertools.product(max_depth_range, min_child_weight_range)
     base_params = tune_xgb_param(
-        model, d_train, d_val, base_params,
+        fit,
+        d_train, base_params,
         tune_list, ['max_depth', 'min_child_weight'], round_count, loss_compare)
 
     print("tuning gamma ...")
     gamma_range = [(i/10.0,) for i in range(0,5)]
     tune_list = gamma_range
     base_params = tune_xgb_param(
-        model, d_train, d_val, base_params,
+        fit,
+        d_train, base_params,
         tune_list, ['gamma'], round_count, loss_compare)
 
     print("re-computing best round...")
-    evals_result = {}
-    model = xgb.train(
-        base_params, d_train, 
-        num_boost_round=round_count,
-        early_stopping_rounds=10,
-        evals=[(d_val, "validation")],
-        evals_result=evals_result,
-        verbose_eval=False,
-    )
-
-    round_count = model.best_iteration + 1
+    round_count, _ = fit(base_params, d_train, round_count)
     print("best round: {}".format(round_count))
 
-
     print("tuning subsample and colsample_bytree ...")
-    subsample_range = [i/10.0 for i in range(6,10)]
-    colsample_bytree_range = [i/10.0 for i in range(0,10)]
+    subsample_range = [i/10.0 for i in range(6,11)]
+    colsample_bytree_range = [i/10.0 for i in range(0,11)]
     tune_list = itertools.product(subsample_range, colsample_bytree_range)
     base_params = tune_xgb_param(
-        model, d_train, d_val, base_params,
+        fit,
+        d_train, base_params,
         tune_list, ['subsample', 'colsample_bytree'], round_count, loss_compare)
 
     print("fine tuning subsample and colsample_bytree ...")
@@ -101,7 +103,8 @@ def tune_xgb_pass(train, target, val, val_target, base_params, round_count, loss
 
     tune_list = itertools.product(subsample_range, colsample_bytree_range)
     base_params = tune_xgb_param(
-        model, d_train, d_val, base_params,
+        fit,
+        d_train, base_params,
         tune_list, ['subsample', 'colsample_bytree'],
         round_count, loss_compare)
 
@@ -111,14 +114,16 @@ def tune_xgb_pass(train, target, val, val_target, base_params, round_count, loss
 
     tune_list = itertools.product(alpha_range, lambda_range)
     base_params = tune_xgb_param(
-        model, d_train, d_val, base_params,
+        fit,
+        d_train, base_params,
         tune_list, ['alpha', 'lambda'],
         round_count, loss_compare)
 
     print("tuning seed ...")
-    seed_range = [(4,), (7,), (13,), (27,), (42,), (54,)]
+    seed_range = [(0,), (4,), (7,), (13,), (27,), (42,), (54,)]
     base_params = tune_xgb_param(
-        model, d_train, d_val, base_params,
+        fit,
+        d_train, base_params,
         seed_range, ['seed'], round_count, loss_compare)
 
     print(base_params)
@@ -126,30 +131,55 @@ def tune_xgb_pass(train, target, val, val_target, base_params, round_count, loss
 
 
 def tune_xgb_model(
-    x_train, y_train, x_val, y_val,
-    params, max_round_count=5000, loss_compare=operator.lt, pass_count=2):
+    params, 
+    x_train, y_train, x_val=None, y_val=None,
+    nfold=3, stratified=False, folds=None,
+    max_round_count=5000, loss_compare=operator.lt, pass_count=2):
     '''Tunes a XGBoost model
 
     Examples:
         >>> params, round_count = tune_xgb_model(x, y, x_val, y_val, model_params)
 
     Args:
+        params: A dictionary with the base xgboost parameters to use
         x_train: Train set
         y_train: Train labels
         x_val: Validation set
         y_val: Validation labels
-        params: A dictionary with the base xgboost parameters to use
+        nfold: Number of folds for cv
+        stratified: Perform stratified sampling
+        folds: Sklearn KFolds or StratifiedKFolds object
         max_round_count: Maximum number of rounds during training
         pass_count: Number of tuning pass to do
 
     Returns:
         A tuple of tuned parameters and round count. 
     '''
+
+    d_train = xgb.DMatrix(x_train, label=y_train)
+    if x_val is None:        
+        kwargs = {
+            'nfold': nfold,
+            'stratified': stratified,
+            'folds': folds,
+        }
+        xgb_fit = functools.partial(xgb.cv, **kwargs)
+        fit = functools.partial(_fit_cv, xgb_fit)
+    else:
+        d_val = xgb.DMatrix(x_val, label=y_val)
+        kwargs = {
+            "evals": [(d_val, "validation")],
+        }
+
+        xgb_fit = functools.partial(xgb.train, **kwargs)
+        fit = functools.partial(_fit_val, xgb_fit)
+    
+
     for tune_pass in range(pass_count):
         print('tuning pass {}...'.format(tune_pass))
         params, round_count = tune_xgb_pass(
-            x_train, y_train,
-            x_val, y_val,
+            fit,
+            d_train,
             params, 
             round_count=max_round_count,
             loss_compare=loss_compare)
