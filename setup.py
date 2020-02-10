@@ -19,7 +19,8 @@ pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 python_requires = '>=3.6'
 install_requires = [
-    'xgboost'
+    'xgboost',
+    'numpy',
 ]
 
 setup(
