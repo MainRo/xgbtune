@@ -22,7 +22,7 @@ def test_titanic_val():
     }
 
     actual_params, actual_round_count = tune_xgb_model(
-        params, x_train, y_train, x_val, y_val,        
+        params, x_train, y_train, x_val, y_val,
     )
 
     assert {
