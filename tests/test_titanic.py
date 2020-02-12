@@ -53,7 +53,7 @@ def test_titanic_cv():
     }
 
     actual_params, actual_round_count = tune_xgb_model(
-        params, x, y
+        params, x, y, shuffle=False
     )
 
     assert {
@@ -61,10 +61,10 @@ def test_titanic_cv():
         'eval_metric': 'error',
         'max_depth': 8,
         'min_child_weight': 1,
-        'gamma': 0.3,
-        'subsample': 1.0,
+        'gamma': 0.1,
+        'subsample': 0.9,
         'colsample_bytree': 1.0,
-        'alpha': 0.0,
+        'alpha': 0.01,
         'lambda': 1.1,
-        'seed': 0} == actual_params
-    assert 15 == actual_round_count
+        'seed': 27} == actual_params
+    assert 9 == actual_round_count

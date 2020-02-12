@@ -133,7 +133,7 @@ def tune_xgb_pass(fit, d_train, base_params, round_count, loss_compare):
 def tune_xgb_model(
     params, 
     x_train, y_train, x_val=None, y_val=None,
-    nfold=3, stratified=False, folds=None,
+    nfold=3, stratified=False, folds=None, shuffle=True,
     max_round_count=5000, loss_compare=operator.lt, pass_count=2):
     '''Tunes a XGBoost model
 
@@ -149,6 +149,7 @@ def tune_xgb_model(
         nfold: Number of folds for cv
         stratified: Perform stratified sampling
         folds: Sklearn KFolds or StratifiedKFolds object
+        shuffle: shuffle data on cross validation
         max_round_count: Maximum number of rounds during training
         pass_count: Number of tuning pass to do
 
@@ -157,15 +158,16 @@ def tune_xgb_model(
     '''
 
     d_train = xgb.DMatrix(x_train, label=y_train)
-    if x_val is None:        
+    if x_val is None:  # cv
         kwargs = {
             'nfold': nfold,
             'stratified': stratified,
             'folds': folds,
+            'shuffle': shuffle,
         }
         xgb_fit = functools.partial(xgb.cv, **kwargs)
         fit = functools.partial(_fit_cv, xgb_fit)
-    else:
+    else:  # validation set
         d_val = xgb.DMatrix(x_val, label=y_val)
         kwargs = {
             "evals": [(d_val, "validation")],
