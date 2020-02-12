@@ -61,15 +61,15 @@ def tune_xgb_param(fit, train_set, parameters, tune_list, tune_params, round_cou
     return parameters
 
 
-def tune_xgb_pass(fit, d_train, base_params, round_count, loss_compare, log):
+def tune_xgb_pass(fit, d_train, base_params, tune_params, round_count, loss_compare, log):
     log("computing best round...")
     evals_result = {}
     round_count, _ = fit(base_params, d_train, round_count)
     log("best round: {}".format(round_count))
 
     log("tuning max_depth and min_child_weight ...")
-    max_depth_range = list(range(5,9))
-    min_child_weight_range = list(range(1,4))
+    max_depth_range = tune_params.get('max_depth') or list(range(5,9))
+    min_child_weight_range = tune_params.get('min_child_weight') or list(range(1,4))
     tune_list = itertools.product(max_depth_range, min_child_weight_range)
     base_params = tune_xgb_param(
         fit,
@@ -78,7 +78,7 @@ def tune_xgb_pass(fit, d_train, base_params, round_count, loss_compare, log):
         round_count, loss_compare, log)
 
     log("tuning gamma ...")
-    gamma_range = [(i/10.0,) for i in range(0,5)]
+    gamma_range = tune_params.get('gamma') or [(i/10.0,) for i in range(0,5)]
     tune_list = gamma_range
     base_params = tune_xgb_param(
         fit,
@@ -91,8 +91,8 @@ def tune_xgb_pass(fit, d_train, base_params, round_count, loss_compare, log):
     log("best round: {}".format(round_count))
 
     log("tuning subsample and colsample_bytree ...")
-    subsample_range = [i/10.0 for i in range(6,11)]
-    colsample_bytree_range = [i/10.0 for i in range(0,11)]
+    subsample_range = tune_params.get('subsample') or [i/10.0 for i in range(6,11)]
+    colsample_bytree_range = tune_params.get('colsample_bytree') or [i/10.0 for i in range(0,11)]
     tune_list = itertools.product(subsample_range, colsample_bytree_range)
     base_params = tune_xgb_param(
         fit,
@@ -101,11 +101,11 @@ def tune_xgb_pass(fit, d_train, base_params, round_count, loss_compare, log):
         round_count, loss_compare, log)
 
     log("fine tuning subsample and colsample_bytree ...")
-    subsample_range = [i/100 for i in range(
+    subsample_range = tune_params.get('subsample') or [i/100 for i in range(
         int(base_params['subsample']*100-5),
         int(base_params['subsample']*100+5),
         5)]
-    colsample_bytree_range = [i/100 for i in range(
+    colsample_bytree_range = tune_params.get('colsample_bytree') or [i/100 for i in range(
         int(base_params['colsample_bytree']*100-5),
         int(base_params['colsample_bytree']*100+5),
         5
@@ -119,8 +119,8 @@ def tune_xgb_pass(fit, d_train, base_params, round_count, loss_compare, log):
         round_count, loss_compare, log)
 
     log("tuning alpha and lambda ...")
-    alpha_range = [0, 0.01, 0.1, 0.5, 1]
-    lambda_range = [1, 1.1, 1.5, 2, 5]
+    alpha_range = tune_params.get('alpha') or [0, 0.01, 0.1, 0.5, 1]
+    lambda_range = tune_params.get('lambda') or [1, 1.1, 1.5, 2, 5]
 
     tune_list = itertools.product(alpha_range, lambda_range)
     base_params = tune_xgb_param(
@@ -130,7 +130,7 @@ def tune_xgb_pass(fit, d_train, base_params, round_count, loss_compare, log):
         round_count, loss_compare, log)
 
     log("tuning seed ...")
-    seed_range = [(0,), (4,), (7,), (13,), (27,), (42,), (54,)]
+    seed_range = tune_params.get('seed') or [(0,), (4,), (7,), (13,), (27,), (42,), (54,)]
     base_params = tune_xgb_param(
         fit,
         d_train, base_params,
@@ -145,6 +145,7 @@ def tune_xgb_model(
     params, 
     x_train, y_train, x_val=None, y_val=None,
     nfold=3, stratified=False, folds=None, shuffle=True,
+    tune_params={},
     max_round_count=5000, loss_compare=operator.lt, pass_count=2,
     verbose=True):
     '''Tunes a XGBoost model
@@ -162,6 +163,7 @@ def tune_xgb_model(
         stratified: Perform stratified sampling
         folds: Sklearn KFolds or StratifiedKFolds object
         shuffle: shuffle data on cross validation
+        tune_params: dictionary containing list of values to test to each parameter
         max_round_count: Maximum number of rounds during training
         pass_count: Number of tuning pass to do
 
@@ -195,7 +197,8 @@ def tune_xgb_model(
         params, round_count = tune_xgb_pass(
             fit,
             d_train,
-            params, 
+            params,
+            tune_params,
             round_count=max_round_count,
             loss_compare=loss_compare,
             log=log)
