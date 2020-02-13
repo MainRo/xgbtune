@@ -9,6 +9,7 @@ Welcome to XGBTune's documentation!
    :caption: Contents:
 
    get_started
+   parameters
    reference
 
 
