@@ -26,3 +26,30 @@ Get Started
     from xgbtune import tune_xgb_model
 
     params, round_count = tune_xgb_model(params, x_train, y_train)
+
+
+Install
+========
+
+XGBTune is available on PyPi and can be installed with pip:
+
+.. code:: console
+
+    pip install xgbtune
+
+
+Tunning steps
+=============
+
+The tunning is done in the following steps:
+
+* compute best round
+* tune max_depth and min_child_weight
+* tune gamma
+* re-compute best round
+* tune subsample and colsample_bytree
+* fine tune subsample and colsample_bytree
+* tune alpha and lambda
+* tune seed
+
+This steps can be repeated several times. By default, two passes are done.
