@@ -15,7 +15,7 @@ XGBTune
     :alt: Documentation Status
 
 
-XGBTune is a library for automated XGBoost model tunning. Tunning an XGBoost
+XGBTune is a library for automated XGBoost model tuning. Tuning an XGBoost
 model is as simple as a single function call.
 
 Get Started
@@ -38,10 +38,10 @@ XGBTune is available on PyPi and can be installed with pip:
     pip install xgbtune
 
 
-Tunning steps
+Tuning steps
 =============
 
-The tunning is done in the following steps:
+The tuning is done in the following steps:
 
 * compute best round
 * tune max_depth and min_child_weight
