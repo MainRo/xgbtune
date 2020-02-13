@@ -25,7 +25,7 @@ install_requires = [
 
 setup(
     name="xgbtune",
-    version='1.0.0',
+    version='1.0.1',
     url='https://github.com/MainRo/xgbtune.git',
     license='MIT',
     description="Automated XGBoost tunning",
