@@ -68,3 +68,37 @@ def test_titanic_cv():
         'lambda': 1.1,
         'seed': 27} == actual_params
     assert 9 == actual_round_count
+
+
+def test_titanic_low_boundary_colsample_bytree():
+    dataset_path = str(pathlib.Path(__file__).parent.absolute())
+
+    df = pd.read_csv(os.path.join(dataset_path, 'datasets', 'titanic.csv'))
+    df['Sex'] = df['Sex'].map(lambda i: 1 if 'male' else 0)
+    x = df[['Sex', 'Age', 'SibSp', 'Parch', 'Fare']]
+    y = df['Survived']
+
+    params = {
+        'objective': 'binary:logistic',
+        'eval_metric': 'error',
+    }
+
+    actual_params, actual_round_count = tune_xgb_model(
+        params, x, y, shuffle=False,
+        tune_params={
+            "colsample_bytree": [0.0, 0.1]
+        }
+    )
+
+    assert {
+        'objective': 'binary:logistic',
+        'eval_metric': 'error',
+        'max_depth': 8,
+        'min_child_weight': 1,
+        'gamma': 0.0,
+        'subsample': 1.0,
+        'colsample_bytree': 0.0,
+        'alpha': 0.01,
+        'lambda': 1.0,
+        'seed': 27} == actual_params
+    assert 20 == actual_round_count
